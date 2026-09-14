@@ -1,0 +1,66 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "platformkit"
+version = "0.1.0"
+description = "Pluggable auth, audit, and queue primitives for production-shaped apps"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{ name = "Yash Shah", email = "yash376351@gmail.com" }]
+dependencies = [
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/yashshah9/platformkit"
+Repository = "https://github.com/yashshah9/platformkit"
+Issues = "https://github.com/yashshah9/platformkit/issues"
+
+[project.optional-dependencies]
+redis = ["redis>=5.0"]
+postgres = ["psycopg[binary]>=3.1"]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+    "mypy>=1.9",
+    "platformkit[redis,postgres]",
+]
+
+[project.entry-points."platformkit.auth"]
+memory = "platformkit.auth.memory:MemoryAuth"
+api_key = "platformkit.auth.api_key:ApiKeyAuth"
+
+[project.entry-points."platformkit.audit"]
+memory = "platformkit.audit.memory:MemoryAudit"
+postgres = "platformkit.audit.postgres:PostgresAudit"
+
+[project.entry-points."platformkit.queue"]
+memory = "platformkit.queue.memory:MemoryQueue"
+redis = "platformkit.queue.redis_queue:RedisQueue"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/platformkit"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/platformkit/py.typed" = "platformkit/py.typed"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+packages = ["platformkit"]

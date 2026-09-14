@@ -1,0 +1,36 @@
+services:
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: platformkit
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d platformkit"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  integration:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: test
+    environment:
+      RUN_DOCKER_INTEGRATION: "1"
+      PLATFORMKIT_REDIS_URL: redis://redis:6379/0
+      PLATFORMKIT_POSTGRES_DSN: postgresql://postgres:postgres@postgres:5432/platformkit
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    command: ["pytest", "tests/test_integration_docker.py", "-v"]
