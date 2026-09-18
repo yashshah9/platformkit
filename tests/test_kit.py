@@ -44,6 +44,15 @@ def test_from_config_memory_roundtrip() -> None:
     assert msg["run_id"] == "r1"
     assert kit.queue.dequeue("runs") is None
 
+    kit.queue.enqueue("runs", {"run_id": "r2"})
+    kit.queue.enqueue("other", {"x": 1})
+    assert hasattr(kit.queue, "clear")
+    kit.queue.clear("runs")  # type: ignore[attr-defined]
+    assert kit.queue.depth("runs") == 0
+    assert kit.queue.depth("other") == 1
+    kit.queue.clear()  # type: ignore[attr-defined]
+    assert kit.queue.depth("other") == 0
+
 
 def test_inject_custom_auth() -> None:
     auth = MemoryAuth(

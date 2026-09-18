@@ -31,3 +31,10 @@ class MemoryQueue:
 
     def depth(self, topic: str) -> int:
         return len(self._topics.get(topic, ()))
+
+    def clear(self, topic: str | None = None) -> None:
+        """Drop queued messages (tests / admin reset)."""
+        if topic is None:
+            self._topics.clear()
+        else:
+            self._topics.pop(topic, None)
