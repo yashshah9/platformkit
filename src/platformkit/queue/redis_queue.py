@@ -44,7 +44,18 @@ class RedisQueue:
         body = envelope["body"]
         if not isinstance(body, dict):
             raise TypeError("queue message body must be a dict")
-        return {"id": envelope["id"], **body}
+        # Envelope id wins over any body["id"] (stable ack / dedupe key).
+        return {**body, "id": envelope["id"]}
 
     def depth(self, topic: str) -> int:
         return int(self._redis.llen(self._key(topic)))
+
+    def clear(self, topic: str | None = None) -> None:
+        """Drop queued messages (parity with MemoryQueue)."""
+        if topic is not None:
+            self._redis.delete(self._key(topic))
+            return
+        pattern = f"{self._prefix}:q:*"
+        keys = list(self._redis.scan_iter(match=pattern, count=100))
+        if keys:
+            self._redis.delete(*keys)

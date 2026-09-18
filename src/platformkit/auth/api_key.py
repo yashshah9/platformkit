@@ -31,7 +31,7 @@ class ApiKeyAuth:
         if token in self._admin:
             tenant: str = self._keys.get(token) or "admin"
             return Principal(
-                id=f"key:{token[:8]}",
+                id=tenant,
                 roles=frozenset({"admin", self._default_role}),
                 tenant_id=tenant,
             )
@@ -39,7 +39,7 @@ class ApiKeyAuth:
         if mapped is None:
             return None
         return Principal(
-            id=f"key:{token[:8]}",
+            id=mapped,
             roles=frozenset({self._default_role}),
             tenant_id=mapped,
         )
@@ -50,6 +50,10 @@ class ApiKeyAuth:
         action: str,
         resource: str | None = None,
     ) -> bool:
-        del principal, action, resource
-        # MVP: any authenticated principal is allowed; tighten per-app.
+        del resource
+        if "admin" in principal.roles:
+            return True
+        # Non-admins cannot perform admin-scoped actions.
+        if action.startswith("admin.") or action.startswith("admin:"):
+            return False
         return True

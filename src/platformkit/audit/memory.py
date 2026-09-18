@@ -24,7 +24,7 @@ class MemoryAudit:
         event = AuditEvent(
             actor=actor,
             action=action,
-            payload=payload,
+            payload=dict(payload),
             resource_type=resource_type,
             resource_id=resource_id,
             tenant_id=tenant_id,

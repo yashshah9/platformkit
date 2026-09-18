@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "platformkit"
-version = "0.1.1"
+version = "0.1.2"
 description = "Pluggable auth, audit, and queue primitives for production-shaped apps"
 readme = "README.md"
 license = "MIT"

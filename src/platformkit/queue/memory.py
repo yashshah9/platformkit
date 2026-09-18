@@ -14,7 +14,7 @@ class MemoryQueue:
 
     def enqueue(self, topic: str, message: dict[str, Any]) -> str:
         msg_id = str(uuid.uuid4())
-        envelope = {"id": msg_id, "body": message}
+        envelope = {"id": msg_id, "body": dict(message)}
         self._topics[topic].append(envelope)
         return msg_id
 
@@ -24,7 +24,9 @@ class MemoryQueue:
             bucket = self._topics.get(topic)
             if bucket:
                 envelope = bucket.popleft()
-                return {"id": envelope["id"], **envelope["body"]}
+                body = envelope["body"]
+                # Envelope id wins over any body["id"] (stable ack / dedupe key).
+                return {**body, "id": envelope["id"]}
             if time.monotonic() >= deadline:
                 return None
             time.sleep(0.01)

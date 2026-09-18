@@ -20,28 +20,39 @@ def test_from_config_memory_roundtrip() -> None:
     principal = kit.auth.authenticate("dev-key")
     assert principal is not None
     assert principal.tenant_id == "tenant-1"
+    assert principal.id == "tenant-1"
+    assert not principal.id.startswith("key:")
     assert kit.auth.authenticate("nope") is None
 
     admin = kit.auth.authenticate("admin")
     assert admin is not None
     assert "admin" in admin.roles
+    assert kit.auth.authorize(admin, "admin.reset") is True
+    assert kit.auth.authorize(principal, "runs:create") is True
+    assert kit.auth.authorize(principal, "admin.reset") is False
 
+    payload = {"ok": True}
     kit.audit.emit(
         actor=principal.id,
         action="run.create",
-        payload={"ok": True},
+        payload=payload,
         tenant_id="tenant-1",
     )
+    payload["ok"] = False
     events = kit.audit.list(tenant_id="tenant-1")
     assert len(events) == 1
     assert events[0].action == "run.create"
+    assert events[0].payload["ok"] is True
 
-    msg_id = kit.queue.enqueue("runs", {"run_id": "r1"})
+    body = {"run_id": "r1", "id": "evil"}
+    msg_id = kit.queue.enqueue("runs", body)
+    body["run_id"] = "mutated"
     assert msg_id
     assert kit.queue.depth("runs") == 1
     msg = kit.queue.dequeue("runs")
     assert msg is not None
     assert msg["run_id"] == "r1"
+    assert msg["id"] == msg_id
     assert kit.queue.dequeue("runs") is None
 
     kit.queue.enqueue("runs", {"run_id": "r2"})
